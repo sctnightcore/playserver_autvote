@@ -1,7 +1,7 @@
-import requests,json,base64,urllib,re,threading,time
+import requests,json,base64,urllib,re,threading,time,asyncio
 Base_url = "https://api.ace-captcha.com/CreateTask"
 
-key = "Ajex"
+key = "x"
 server = "15282"
 userid = "Ajex"
 
@@ -43,7 +43,9 @@ def loop_vote(self,proxies):
     while True:
         b = get_image(self,proxies)
         if b:
+            print(b)
             solvedText = ACE(b['base64'])
+            print(solvedText)
             if next_time:
                 get_time = time.time()
                 if get_time - dle_time < next_time:
@@ -60,6 +62,7 @@ def loop_vote(self,proxies):
 
 def autovote(self):
     with open('proxy.txt','r') as fp:
+        loop = asyncio.get_event_loop()
         check = []
         px = fp.read().splitlines()
         for x in px:
