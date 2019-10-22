@@ -60,7 +60,6 @@ def loop_vote(self,proxies):
 
 def autovote(self):
     with open('proxy.txt','r') as fp:
-        loop = asyncio.get_event_loop()
         check = []
         px = fp.read().splitlines()
         for x in px:
