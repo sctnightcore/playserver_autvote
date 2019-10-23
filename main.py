@@ -79,7 +79,7 @@ class MAIN(ACE, PLAYSERVER):
 				break
 
 	def auto_vote(self):
-		with open('proxy.txt', 'r') as fp
+		with open('proxy.txt', 'r') as fp:
 			loop = asyncio.get_event_loop()
 			check = []
 			px = fp.read().splitlines()
