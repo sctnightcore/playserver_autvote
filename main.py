@@ -13,17 +13,17 @@ class ACE():
 
 class PLAYSERVER():
 	def get_image(self, proxy):
-		rid = requests.post(self.update_psv["getimage"], headers=self.update_psv["header"],proxies=proxies).json()
+		rid = requests.post(self.update_psv["getimage"], headers=self.update_psv["header"],proxies=proxy).json()
 		IMAGE_ID = rid['checksum']
-		IMAGECT = requests.get(self.update_psv["u_image"] + IMAGE_ID, headers=self.update_psv["header"],proxies=proxies)
+		IMAGECT = requests.get(self.update_psv["u_image"] + IMAGE_ID, headers=self.update_psv["header"],proxies=proxy)
 		base64pic = base64.b64encode(IMAGECT.content).decode('utf-8')
 		if base64pic.find('iVBORw0KGgoAAAANSUhE') > -1:
 			IMAGE = {'id':IMAGE_ID,'base64':base64pic}
 			return IMAGE
 		else:
 			return False
-	def post_image(self,proxy):
-		vote = requests.post(self.update_psv["submit"],headers=self.update_psv["header"],data=data_vote,proxies=proxies).json()
+	def post_image(self, data_vote, proxy):
+		vote = requests.post(self.update_psv["submit"],headers=self.update_psv["header"],data=data_vote,proxies=proxy).json()
 		return vote
 	
 class MAIN(ACE, PLAYSERVER):
@@ -35,10 +35,7 @@ class MAIN(ACE, PLAYSERVER):
         	"u_image" : "http://playserver.co/index.php/VoteGetImage/",
         	"cb_vote" : "http://playserver.in.th/index.php/Vote/prokud/",
     	}
-	def run(self):
-		self._update_psv()
-		self.auto_vote()
-	
+
 	def _update_psv(self):
 		try:
 			unpack1 = requests.get(self.update_psv["u_server"]+self.config['SERVERID'])
@@ -61,7 +58,7 @@ class MAIN(ACE, PLAYSERVER):
 		next_time = None
 		dle_time = 0
 		while True:
-			b = self.get_image(self,proxy)
+			b = self.get_image(proxy)
 			if b:
 				solvedText = self.get_answer(b['base64'])
 				if next_time:
@@ -77,7 +74,7 @@ class MAIN(ACE, PLAYSERVER):
 					print(c,b['id'],solvedText)
 			else:
 				break
-
+	
 	def auto_vote(self):
 		with open('proxy.txt', 'r') as fp:
 			loop = asyncio.get_event_loop()
@@ -87,11 +84,12 @@ class MAIN(ACE, PLAYSERVER):
 				if x not in check:
 					check.append(x)
 					proxies = {'http': ('http://'+x),'https': ('https://'+x), 'ftp': ('ftp://'+x)}
-					threading.Thread(target = loop_vote, args = (proxies)).start()
+					thread = threading.Thread(target=self.loop_vote, args=(proxies,)).start()
 	
 if __name__ == "__main__":
 	config = None
 	with open('config.json', 'r') as config_paser:
 		config = json.load(config_paser)
 	c = MAIN(config)
-	c.run()
+	c._update_psv()
+	c.auto_vote()
