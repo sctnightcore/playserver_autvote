@@ -2,29 +2,38 @@ import requests,json,base64,urllib,re,threading,time,asyncio
 
 class ACE():
 	def get_answer(self, img_base64):
-		data = {
-			"keyAuthorize": self.config['ACE_KEY'],
-			"body": img_base64
-		}
-		image = requests.post("https://api.ace-captcha.com/CreateTask",json=data).json()
-		if image['errorID'] == 0:
-			return image['solvedText']
+		try:
+			data = {
+				"keyAuthorize": self.config['ACE_KEY'],
+				"body": img_base64
+			}
+			image = requests.post("https://api.ace-captcha.com/CreateTask",json=data).json()
+			if image['errorID'] == 0:
+				return image['solvedText']
+		except Exception as e:
+			return False
 
 
 class PLAYSERVER():
 	def get_image(self, proxy):
-		rid = requests.post(self.update_psv["getimage"], headers=self.update_psv["header"],proxies=proxy).json()
-		IMAGE_ID = rid['checksum']
-		IMAGECT = requests.get(self.update_psv["u_image"] + IMAGE_ID, headers=self.update_psv["header"],proxies=proxy)
-		base64pic = base64.b64encode(IMAGECT.content).decode('utf-8')
-		if base64pic.find('iVBORw0KGgoAAAANSUhE') > -1:
-			IMAGE = {'id':IMAGE_ID,'base64':base64pic}
-			return IMAGE
-		else:
+		try:
+			rid = requests.post(self.update_psv["getimage"], headers=self.update_psv["header"],proxies=proxy).json()
+			IMAGE_ID = rid['checksum']
+			IMAGECT = requests.get(self.update_psv["u_image"] + IMAGE_ID, headers=self.update_psv["header"],proxies=proxy)
+			base64pic = base64.b64encode(IMAGECT.content).decode('utf-8')
+			if base64pic.find('iVBORw0KGgoAAAANSUhE') > -1:
+				IMAGE = {'id':IMAGE_ID,'base64':base64pic}
+				return IMAGE
+			else:
+				return False
+		except Exception as e:
 			return False
 	def post_image(self, data_vote, proxy):
-		vote = requests.post(self.update_psv["submit"],headers=self.update_psv["header"],data=data_vote,proxies=proxy).json()
-		return vote
+		try:
+			vote = requests.post(self.update_psv["submit"],headers=self.update_psv["header"],data=data_vote,proxies=proxy).json()
+			return vote
+		except Exception as e:
+			return False
 	
 class MAIN(ACE, PLAYSERVER):
 	def __init__(self,config):
@@ -58,22 +67,27 @@ class MAIN(ACE, PLAYSERVER):
 		next_time = None
 		dle_time = 0
 		while True:
-			b = self.get_image(proxy)
-			if b:
-				solvedText = self.get_answer(b['base64'])
-				if next_time:
-					get_time = time.time()
-					if get_time - dle_time < next_time:
-						tiem_x = int(get_time - dle_time)
-						time.sleep(next_time-tiem_x)
-				data_vote = {'server_id':self.config['SERVERID'] ,'captcha': solvedText, 'gameid': self.config['USERID'], 'checksum': b['id']}
-				c = self.post_image(data_vote, proxy)
-				if c:
-					next_time = int(c["wait"])
-					dle_time = time.time()
-					print(c,b['id'],solvedText)
-			else:
-				break
+			try:
+				b = self.get_image(proxy)
+				if b:
+					solvedText = self.get_answer(b['base64'])
+					if next_time:
+						get_time = time.time()
+						if get_time - dle_time < next_time:
+							tiem_x = int(get_time - dle_time)
+							time.sleep(next_time-tiem_x)
+					data_vote = {'server_id':self.config['SERVERID'] ,'captcha': solvedText, 'gameid': self.config['USERID'], 'checksum': b['id']}
+					c = self.post_image(data_vote, proxy)
+					if c:
+						next_time = int(c["wait"])
+						dle_time = time.time()
+						print("==============================")
+						print(c)
+						print(b['id'],solvedText)
+				else:
+					break
+			except Exception as e:
+				return False
 	
 	def auto_vote(self):
 		with open('proxy.txt', 'r') as fp:
