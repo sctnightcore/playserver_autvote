@@ -6,7 +6,7 @@ class ACE():
 			"keyAuthorize": self.config['ACE_KEY'],
 			"body": img_base64
 		}
-		image = requests.post(Base_url,json=data).json()
+		image = requests.post("https://api.ace-captcha.com/CreateTask",json=data).json()
 		if image['errorID'] == 0:
 			return image['solvedText']
 
